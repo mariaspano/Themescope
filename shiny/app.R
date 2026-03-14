@@ -216,13 +216,23 @@ build_map_plotly <- function(result, custom_labels = NULL, pal = NULL) {
 
 # ---- Helper: network as plotly -----------------------------------------------
 # ---- Helper: network as visNetwork ------------------------------------------
-build_network_visnetwork <- function(result, custom_labels = NULL, pal = NULL) {
+build_network_visnetwork <- function(result, custom_labels = NULL, pal = NULL,
+                                      hide_unclassified = FALSE) {
   g    <- result$graph
   memb <- result$membership
   deg  <- igraph::degree(g)
 
   vnames   <- igraph::V(g)$name
   comm_ids <- memb[vnames]
+
+  # Optionally drop unclassified nodes and their edges
+  if (hide_unclassified) {
+    keep    <- !is.na(comm_ids)
+    vnames  <- vnames[keep]
+    comm_ids <- comm_ids[keep]
+    deg     <- deg[keep]
+    g       <- igraph::induced_subgraph(g, vids = vnames)
+  }
 
   # Community labels — membership values are integers; keys are "C1", "C2", ...
   comm_label_map <- if (!is.null(custom_labels)) {
@@ -277,50 +287,31 @@ build_network_visnetwork <- function(result, custom_labels = NULL, pal = NULL) {
     stringsAsFactors = FALSE
   )
 
-  # ---- Community layout: centroids on outer circle, nodes on inner circles ----
-  unique_comms_l <- sort(unique(na.omit(comm_ids)))
-  n_cl    <- length(unique_comms_l)
-  R_outer <- 1400
-  node_x  <- stats::setNames(rep(0, length(vnames)), vnames)
-  node_y  <- stats::setNames(rep(0, length(vnames)), vnames)
-  for (ki in seq_along(unique_comms_l)) {
-    cid     <- unique_comms_l[ki]
-    members <- vnames[!is.na(comm_ids) & comm_ids == cid]
-    n_m     <- length(members)
-    theta_c <- 2 * pi * (ki - 1) / n_cl
-    cx      <- R_outer * cos(theta_c)
-    cy      <- R_outer * sin(theta_c)
-    r_inner <- max(150, 60 * sqrt(n_m))
-    for (ji in seq_along(members)) {
-      theta_n <- 2 * pi * (ji - 1) / n_m
-      node_x[members[ji]] <- cx + r_inner * cos(theta_n)
-      node_y[members[ji]] <- cy + r_inner * sin(theta_n)
-    }
-  }
-  nodes$x <- node_x[nodes$id]
-  nodes$y <- node_y[nodes$id]
-
   # ---- visNetwork ----
   visNetwork::visNetwork(nodes, edges,
-    main = list(text = "Semantic Co-occurrence Network",
-                style = "font-family:sans-serif; font-size:16px; font-weight:bold;"),
+    main  = list(text  = "Semantic Co-occurrence Network",
+                 style = "font-family:sans-serif; font-size:16px; font-weight:bold;"),
     width = "100%", height = "100%"
   ) |>
     visNetwork::visOptions(
       highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
       selectedBy       = list(variable = "group", main = "Filter by community")
     ) |>
-    visNetwork::visPhysics(enabled = FALSE) |>
+    visNetwork::visPhysics(
+      solver            = "forceAtlas2Based",
+      forceAtlas2Based  = list(
+        gravitationalConstant = -300,
+        springLength          = 200,
+        springConstant        = 0.04,
+        damping               = 0.9
+      ),
+      stabilization = list(enabled = TRUE, iterations = 300, fit = TRUE)
+    ) |>
     visNetwork::visEdges(smooth = list(enabled = FALSE)) |>
     visNetwork::visNodes(
-      shape  = "dot",
+      shape   = "dot",
       scaling = list(min = 8, max = 40),
-      shadow = list(enabled = TRUE, size = 4)
-    ) |>
-    visNetwork::visLegend(
-      useGroups = TRUE,
-      position  = "right",
-      main      = "Community"
+      shadow  = list(enabled = TRUE, size = 4)
     ) |>
     visNetwork::visInteraction(
       navigationButtons = TRUE,
@@ -933,7 +924,22 @@ ui <- page_sidebar(
           class = "d-flex justify-content-between align-items-center",
           tagList("Co-occurrence Network",
             tags$small(class="text-muted ms-2", "(usa la \U1F4F7 toolbar per PNG)")),
-          downloadButton("dl_net_png", "HTML", class = "btn-sm btn-outline-secondary")
+          div(
+            class = "d-flex align-items-center gap-3",
+            div(
+              class = "form-check form-switch mb-0",
+              tags$input(
+                class = "form-check-input", type = "checkbox",
+                id = "net_hide_unclassified", role = "switch"
+              ),
+              tags$label(
+                class = "form-check-label small",
+                `for` = "net_hide_unclassified",
+                "Only classified"
+              )
+            ),
+            downloadButton("dl_net_png", "HTML", class = "btn-sm btn-outline-secondary")
+          )
         ),
         card_body(
           uiOutput("network_placeholder"),
@@ -1189,7 +1195,9 @@ server <- function(input, output, session) {
   # ---- Network plot (visNetwork) ---------------------------------------------
   network_reactive <- reactive({
     req(result_obj())
-    build_network_visnetwork(result_obj(), custom_labels(), community_palette())
+    hide_unc <- isTRUE(input$net_hide_unclassified)
+    build_network_visnetwork(result_obj(), custom_labels(), community_palette(),
+                             hide_unclassified = hide_unc)
   })
 
   output$network_placeholder <- renderUI({
