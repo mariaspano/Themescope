@@ -311,7 +311,7 @@ build_topterms_plotly <- function(df, custom_labels = NULL) {
 
   comms   <- unique(df$community_label)
   n_comms <- length(comms)
-  ncols   <- min(3L, n_comms)
+  ncols   <- min(2L, n_comms)
   nrows   <- ceiling(n_comms / ncols)
 
   pal <- setNames(
@@ -914,7 +914,7 @@ ui <- page_sidebar(
         card_body(
           uiOutput("topterms_placeholder"),
           withSpinner(
-            plotlyOutput("topterms_plot", height = "600px"),
+            uiOutput("topterms_plot_ui"),
             type  = 6,
             color = "#2c3e50"
           )
@@ -1352,6 +1352,14 @@ server <- function(input, output, session) {
     }
   })
 
+  output$topterms_plot_ui <- renderUI({
+    req(result_obj())
+    n_comms <- length(unique(top_terms_df()$community))
+    nrows   <- ceiling(n_comms / min(2L, n_comms))
+    h_px    <- max(500, nrows * 320)
+    plotlyOutput("topterms_plot", height = paste0(h_px, "px"))
+  })
+
   output$topterms_plot <- renderPlotly({
     req(result_obj())
     build_topterms_plotly(top_terms_df(), custom_labels())
@@ -1411,11 +1419,18 @@ server <- function(input, output, session) {
     content  = function(file) { req(result_obj()); save_plotly_html(map_reactive(), file) }
   )
 
+  build_network_export <- function() {
+    net <- build_network_visnetwork(result_obj(), custom_labels())
+    net$x$width  <- "1400px"
+    net$x$height <- "900px"
+    net
+  }
+
   output$dl_net_png <- downloadHandler(
     filename = function() paste0("themescope_network_", Sys.Date(), ".html"),
     content  = function(file) {
       req(result_obj())
-      visNetwork::visSave(network_reactive(), file = file, selfcontained = TRUE)
+      visNetwork::visSave(build_network_export(), file = file, selfcontained = TRUE)
     }
   )
 
@@ -1423,7 +1438,7 @@ server <- function(input, output, session) {
     filename = function() paste0("themescope_network_", Sys.Date(), ".html"),
     content  = function(file) {
       req(result_obj())
-      visNetwork::visSave(network_reactive(), file = file, selfcontained = TRUE)
+      visNetwork::visSave(build_network_export(), file = file, selfcontained = TRUE)
     }
   )
 }
