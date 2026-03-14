@@ -224,12 +224,14 @@ build_network_visnetwork <- function(result, custom_labels = NULL, pal = NULL) {
   vnames   <- igraph::V(g)$name
   comm_ids <- memb[vnames]
 
-  # Community labels
+  # Community labels — membership values are integers; keys are "C1", "C2", ...
   comm_label_map <- if (!is.null(custom_labels)) {
-    function(cid) ifelse(as.character(cid) %in% names(custom_labels),
-                         custom_labels[as.character(cid)], as.character(cid))
+    function(cid) {
+      key <- paste0("C", cid)
+      ifelse(key %in% names(custom_labels), custom_labels[key], key)
+    }
   } else {
-    function(cid) as.character(cid)
+    function(cid) paste0("C", cid)
   }
 
   # Colour palette
@@ -237,12 +239,12 @@ build_network_visnetwork <- function(result, custom_labels = NULL, pal = NULL) {
   if (is.null(pal)) {
     n_c  <- length(unique_comms)
     cols <- grDevices::hcl.colors(n_c, palette = "Set2")
-    pal  <- setNames(cols, as.character(unique_comms))
+    pal  <- setNames(cols, paste0("C", unique_comms))
   }
 
   # ---- Nodes data frame ----
   node_size  <- 10 + log1p(deg) * 5
-  node_color <- ifelse(is.na(comm_ids), "#cccccc", pal[as.character(comm_ids)])
+  node_color <- ifelse(is.na(comm_ids), "#cccccc", pal[paste0("C", comm_ids)])
   comm_lbl   <- sapply(comm_ids, comm_label_map)
 
   nodes <- data.frame(
@@ -1136,12 +1138,14 @@ server <- function(input, output, session) {
   }
 
   # ---- Shared community colour palette ---------------------------------------
+  # Keys are "C1", "C2", ... (names of result$communities / result$psi)
   community_palette <- reactive({
     req(result_obj())
-    comm_ids <- sort(as.integer(names(result_obj()$psi)))
-    n_c  <- length(comm_ids)
+    comm_keys <- names(result_obj()$psi)          # "C1", "C2", ...
+    comm_keys <- comm_keys[order(as.integer(sub("^C", "", comm_keys)))]
+    n_c  <- length(comm_keys)
     cols <- grDevices::hcl.colors(n_c, palette = "Set2")
-    setNames(cols, as.character(comm_ids))
+    setNames(cols, comm_keys)
   })
 
   # ---- Map plot (plotly) -----------------------------------------------------
