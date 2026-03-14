@@ -391,16 +391,49 @@ parse_uploaded_tokens <- function(filepath, filename) {
 
 ui <- page_sidebar(
   title = tags$span(
-    tags$img(
-      src   = NULL,
-      style = "height:28px; margin-right:8px; vertical-align:middle;"
-    ),
-    "ThemeScope"
+    style = "display:flex; align-items:center; justify-content:space-between; width:100%;",
+    # Left: app name
+    tags$span("ThemeScope", style = "font-weight:600; letter-spacing:0.03em;"),
+    # Right: authors + GitHub
+    tags$span(
+      style = "font-size:0.78rem; font-weight:400; opacity:0.85; display:flex; align-items:center; gap:1.2rem;",
+      tags$span(
+        style = "opacity:0.7;",
+        "M. Spano \u00b7 M. Misuraca \u00b7 L. D\u2019Aniello"
+      ),
+      tags$a(
+        href   = "https://github.com/mariaspano/Themescope",
+        target = "_blank",
+        style  = "color:inherit; text-decoration:none; display:flex; align-items:center; gap:0.35rem;",
+        tags$svg(
+          xmlns = "http://www.w3.org/2000/svg", width = "16", height = "16",
+          viewBox = "0 0 24 24", fill = "currentColor",
+          tags$path(d = "M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z")
+        ),
+        "GitHub"
+      )
+    )
   ),
   theme = bs_theme(
     bootswatch = "flatly",
-    base_font  = font_google("Inter")
+    base_font  = font_google("Inter", wght = "300;400;500;600"),
+    font_scale = 0.9
   ),
+  tags$head(tags$style(HTML("
+    /* Navbar gradient */
+    .navbar, .bslib-page-sidebar > .navbar {
+      background: linear-gradient(135deg, #3d4451 0%, #5a6270 60%, #7a8390 100%) !important;
+      border-bottom: none !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .navbar .navbar-brand, .navbar .nav-link, .navbar-text {
+      color: #f0f2f5 !important;
+    }
+    /* Slightly smaller base font */
+    body, .shiny-input-container, .card-body, .sidebar, label {
+      font-size: 0.875rem;
+    }
+  "))),
 
   # ---- Sidebar ---------------------------------------------------------------
   sidebar = sidebar(
