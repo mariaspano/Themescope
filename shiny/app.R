@@ -394,11 +394,15 @@ ui <- page_sidebar(
     style = "display:flex; align-items:center; justify-content:space-between; width:100%;",
     # Left: logo + name
     tags$span(
-      style = "display:flex; align-items:center; gap:0.6rem;",
-      tags$img(
-        src    = "themescope_logo.svg",
-        height = "36px",
-        style  = "vertical-align:middle;"
+      style = "display:flex; align-items:center; gap:0.7rem;",
+      tags$span(
+        style = "background:#ffffff; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.25); flex-shrink:0;",
+        tags$img(
+          src    = "themescope_logo.svg",
+          height = "34px",
+          width  = "34px",
+          style  = "border-radius:50%; display:block;"
+        )
       ),
       tags$span("ThemeScope",
         style = "font-weight:600; letter-spacing:0.04em; font-size:1.1rem;")
@@ -638,13 +642,27 @@ ui <- page_sidebar(
         # ---- Header ----
         div(
           class = "text-center mb-4",
-          tags$h2(class = "fw-bold mb-1", "ThemeScope"),
+          tags$img(
+            src   = "themescope_logo.svg",
+            width = "140px",
+            style = "margin-bottom:1rem; filter:drop-shadow(0 4px 12px rgba(36,59,85,0.25));"
+          ),
+          tags$h2(
+            class = "fw-bold mb-1",
+            style = "color:#243b55; letter-spacing:0.04em;",
+            "ThemeScope"
+          ),
           tags$p(
-            class = "text-muted fs-5 mb-0",
+            class = "fs-5 mb-0",
+            style = "color:#1D9E75; font-weight:500;",
             "Social Representation Analysis in Digital Discourse"
+          ),
+          tags$p(
+            class = "text-muted small mt-1 mb-0",
+            "M. Spano \u00b7 M. Misuraca \u00b7 L. D\u2019Aniello"
           )
         ),
-        tags$hr(class = "mb-4"),
+        tags$hr(class = "mb-4", style = "border-color:#1D9E75; opacity:0.4;"),
 
         # ---- Row 1: What is + Pipeline ----
         div(
