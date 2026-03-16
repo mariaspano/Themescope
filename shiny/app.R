@@ -428,18 +428,32 @@ build_topterms_plotly <- function(df, custom_labels = NULL) {
 }
 
 # ---- Helper: parse uploaded CSV/TSV -----------------------------------------
+# Accepts any annotated file that contains at minimum doc_id, sentence_id,
+# lemma (or token), and upos. Extra columns (date, subreddit, score, …) are
+# kept but not used by the analysis.
 parse_uploaded_tokens <- function(filepath, filename) {
   ext <- tolower(tools::file_ext(filename))
   sep <- if (ext == "tsv") "\t" else ","
-  df  <- utils::read.table(
-    filepath,
-    header    = TRUE,
-    sep       = sep,
-    quote     = '"',
-    fill      = TRUE,
-    comment.char = "",
-    stringsAsFactors = FALSE
-  )
+
+  if (requireNamespace("data.table", quietly = TRUE)) {
+    df <- data.table::fread(filepath, sep = sep, data.table = FALSE,
+                            encoding = "UTF-8")
+  } else {
+    df <- utils::read.table(filepath, header = TRUE, sep = sep,
+                            quote = '"', fill = TRUE, comment.char = "",
+                            stringsAsFactors = FALSE)
+  }
+
+  # Rename 'token' -> 'lemma' if lemma is absent
+  if (!"lemma" %in% names(df) && "token" %in% names(df)) {
+    df$lemma <- df$token
+  }
+
+  # Coerce key columns to character
+  for (col in intersect(c("doc_id", "sentence_id", "lemma", "upos"), names(df))) {
+    df[[col]] <- as.character(df[[col]])
+  }
+
   df
 }
 
@@ -858,11 +872,11 @@ ui <- page_sidebar(
                         ),
                         tags$td(class="pb-3",
                           tags$strong("Load data"), tags$br(),
-                          "Use ", tags$strong("Upload CSV/TSV"), " to load a pre-annotated file",
-                          " (columns: ", tags$code("doc_id"), ", ", tags$code("sentence_id"), ", ",
-                          tags$code("lemma"), ", ", tags$code("upos"), "). ",
-                          "Or click ", tags$strong("Demo Data"), " to load the built-in ",
-                          "Reddit Climate Change 2025 corpus (10,000 documents)."
+                          "Use ", tags$strong("Upload CSV/TSV"), " to load any pre-annotated file.",
+                          " Required columns: ", tags$code("doc_id"), ", ", tags$code("sentence_id"), ", ",
+                          tags$code("lemma"), " (or ", tags$code("token"), "), ", tags$code("upos"), ".",
+                          " Extra columns (date, subreddit, score, …) are accepted and ignored.",
+                          " Or click ", tags$strong("Demo Data"), " to use the built-in corpus."
                         )
                       ),
                       tags$tr(
