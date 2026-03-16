@@ -1055,83 +1055,97 @@ ui <- page_sidebar(
     # --- Tab 1: Summary -------------------------------------------------------
     nav_panel(
       title = tagList(icon("chart-bar"), " Summary"),
-      layout_columns(
-        col_widths = c(6, 6),
+      navset_pill(
+        id = "summary_sub",
 
-        card(
-          card_header("Network Statistics"),
-          card_body(
-            uiOutput("summary_placeholder_net"),
-            withSpinner(tableOutput("network_stats_table"),
-                        type = 6, color = "#2c3e50")
+        # ---- Sub-tab A: Overview ---------------------------------------------
+        nav_panel(
+          title = tagList(icon("circle-info"), " Overview"),
+          div(style = "margin-top:0.8rem;",
+            layout_columns(
+              col_widths = c(5, 4, 3),
+
+              card(
+                card_header("Network Statistics"),
+                card_body(
+                  uiOutput("summary_placeholder_net"),
+                  withSpinner(tableOutput("network_stats_table"),
+                              type = 6, color = "#2c3e50")
+                )
+              ),
+
+              card(
+                card_header("Analysis Parameters"),
+                card_body(
+                  uiOutput("summary_placeholder_params"),
+                  tableOutput("params_table")
+                )
+              ),
+
+              card(
+                card_header("Console Output"),
+                card_body(
+                  style = "max-height:320px; overflow-y:auto;",
+                  verbatimTextOutput("summary_text")
+                )
+              )
+            )
           )
         ),
 
-        card(
-          card_header("Analysis Parameters"),
-          card_body(
-            uiOutput("summary_placeholder_params"),
-            tableOutput("params_table")
-          )
-        ),
+        # ---- Sub-tab B: Lexicon Coverage -------------------------------------
+        nav_panel(
+          title = tagList(icon("flask"), " Lexicon Coverage"),
+          div(style = "margin-top:0.8rem;",
+            layout_columns(
+              col_widths = c(3, 3, 6),
 
-        card(
-          col_widths = 12,
-          card_header("Console Output"),
-          card_body(verbatimTextOutput("summary_text"))
-        )
-      ),
+              card(
+                card_header("Overall Coverage"),
+                card_body(
+                  uiOutput("diag_placeholder"),
+                  withSpinner(tableOutput("diag_overall"),
+                              type = 6, color = "#1D9E75")
+                )
+              ),
 
-      # ---- Lexicon Diagnostics -----------------------------------------------
-      tags$h5(
-        style = "color:#243b55; font-weight:600; margin:1.4rem 0 0.8rem 0;",
-        icon("flask"), " Lexicon Diagnostics (Brysbaert Coverage)"
-      ),
-      layout_columns(
-        col_widths = c(4, 4, 4),
+              card(
+                card_header("By POS"),
+                card_body(
+                  withSpinner(tableOutput("diag_by_pos"),
+                              type = 6, color = "#1D9E75")
+                )
+              ),
 
-        card(
-          card_header("Overall Coverage"),
-          card_body(
-            uiOutput("diag_placeholder"),
-            withSpinner(tableOutput("diag_overall"),
-                        type = 6, color = "#1D9E75")
-          )
-        ),
+              card(
+                card_header("Coverage by POS — Chart"),
+                card_body(
+                  withSpinner(plotlyOutput("diag_pos_plot", height = "220px"),
+                              type = 6, color = "#1D9E75")
+                )
+              )
+            ),
 
-        card(
-          card_header("Coverage by POS"),
-          card_body(
-            withSpinner(tableOutput("diag_by_pos"),
-                        type = 6, color = "#1D9E75")
-          )
-        ),
+            layout_columns(
+              col_widths = c(5, 7),
 
-        card(
-          card_header("Coverage by Community"),
-          card_body(
-            withSpinner(tableOutput("diag_by_comm"),
-                        type = 6, color = "#1D9E75")
-          )
-        )
-      ),
+              card(
+                card_header("By Community"),
+                card_body(
+                  style = "max-height:300px; overflow-y:auto;",
+                  withSpinner(tableOutput("diag_by_comm"),
+                              type = 6, color = "#1D9E75")
+                )
+              ),
 
-      layout_columns(
-        col_widths = c(6, 6),
-
-        card(
-          card_header("Coverage by POS — Chart"),
-          card_body(
-            withSpinner(plotlyOutput("diag_pos_plot", height = "260px"),
-                        type = 6, color = "#1D9E75")
-          )
-        ),
-
-        card(
-          card_header("Top OOV Terms (by Network Degree)"),
-          card_body(
-            withSpinner(DTOutput("diag_oov_table"),
-                        type = 6, color = "#1D9E75")
+              card(
+                card_header("Top OOV Terms (by Network Degree)"),
+                card_body(
+                  withSpinner(DTOutput("diag_oov_table"),
+                              type = 6, color = "#1D9E75")
+                )
+              )
+            )
           )
         )
       )
